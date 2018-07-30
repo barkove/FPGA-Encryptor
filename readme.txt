@@ -1,1 +1,1 @@
-Verilog описание шифратора ГОСТ 28147-89 в режиме простой замены
+There are verilog description of encryptor (GOST 28147-89 in the simple replacement mode)
