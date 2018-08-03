@@ -22,6 +22,7 @@
 
 module tb_coder();
 
+parameter TEST_VALUES_QUANTITY   = 100;
 parameter CLOCK_SEMI_PERIOD_NS   = 10;
 parameter TDATA_WIDTH            = 64;
 parameter KEY_WIDTH              = 256;
@@ -102,5 +103,32 @@ initial
     ss_tdata_i   = 'habcdef0123456789;
     sm_tready_i  = 1;       
   end
+
+integer i;
+
+integer                       file;
+integer                       file_enc;
+
+reg     [TDATA_WIDTH - 1 : 0] file_val     [0 : TEST_VALUES_QUANTITY];
+reg     [TDATA_WIDTH - 1 : 0] file_enc_val [0 : TEST_VALUES_QUANTITY];
+
+initial begin
+  file     = $fopen("test_sr_100val.txt"    , "r");
+  file_enc = $fopen("test_sr_100val_enc.txt", "r");
+  if ( file == 0 || file_enc == 0 )
+    begin
+      $display("Error: one of test files has not opened");
+      $finish;
+    end
+  for ( i = 0; i < 100; i = i + 1 )
+    begin
+      $fscanf( file    , "%h\n", file_val[i]     );
+      $fscanf( file_enc, "%h\n", file_enc_val[i] );
+      $display("Input / Output value: %h - %h", file_val[i], file_enc_val[i]);
+    end
+  $fclose(file    );
+  $fclose(file_enc);
+  $stop;
+end
 
 endmodule
