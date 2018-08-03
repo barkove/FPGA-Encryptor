@@ -66,7 +66,7 @@ replacer #(
 );
 
 assign r_arg        =    in_block[R_WIDTH - 1 : 0] + key_i[K_WIDTH - 1 : 0];
-// shift_r_res contains the cyclical shifted data that contains r_res
+// shift_r_res contains the cyclical shifted data of r_res
 assign shift_r_res  =  ( r_res << SHIFT_VAL ) | ( ( ( ~0 << ( R_WIDTH - SHIFT_VAL ) ) & r_res ) >> ( R_WIDTH - SHIFT_VAL ) );
 assign sm_tdata_o   =  { in_block[R_WIDTH - 1 : 0],  in_block[TDATA_WIDTH - 1 : R_WIDTH] ^ shift_r_res };
 

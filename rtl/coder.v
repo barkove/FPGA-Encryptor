@@ -76,7 +76,7 @@ cd_unit #(
 
 generate
   genvar j;
-    for (j = 1; j < STAGES_QUANTITY - 1; j = j + 1)
+    for ( j = 1; j < STAGES_QUANTITY - 1; j = j + 1 )
       begin: conveyor_gen
         cd_unit #(
           .TDATA_WIDTH   ( TDATA_WIDTH                                                               ),
@@ -84,7 +84,8 @@ generate
           .R_WIDTH       ( R_WIDTH                                                                   )
         ) cd_unit_h (
           .clk_i         ( clk_i                                                                     ),
-          
+          // j      1  2  3                                                ... 21 22 23 24 25 26 27 28 29 30
+          //    K0 K1 K2 K3 K4 K5 K6 K7 K0 K1 K2 K3 K4 K5 K6 K7 K0 K1 K2 K3 K4 K5 K6 K7 K7 K6 K5 K4 K3 K2 K1 K0
           .key_i         ( j < 24 ? key[( j % 8 + 1 ) * K_WIDTH - 1 : ( j % 8         ) * K_WIDTH] : 
                                     key[( 8 - j % 8 ) * K_WIDTH - 1 : ( 8 - j % 8 - 1 ) * K_WIDTH]   ),
           
@@ -102,23 +103,23 @@ generate
 endgenerate
 
 cd_unit #(
-  .TDATA_WIDTH   ( TDATA_WIDTH                             ),
-  .K_WIDTH       ( K_WIDTH                                 ),
-  .R_WIDTH       ( R_WIDTH                                 )
+  .TDATA_WIDTH   (   TDATA_WIDTH                                                            ),
+  .K_WIDTH       (   K_WIDTH                                                                ),
+  .R_WIDTH       (   R_WIDTH                                                                )
 ) cd_unit_o (
-  .clk_i         ( clk_i                                   ),
+  .clk_i         (   clk_i                                                                  ),
   
-  .key_i         ( key           [K_WIDTH - 1 : 0]         ),
+  .key_i         (   key           [K_WIDTH - 1 : 0]                                        ),
   
-  .ss_aresetn_i  ( aresetn_h     [STAGES_QUANTITY - 2]     ),
-  .ss_tvalid_i   ( tvalid_h      [STAGES_QUANTITY - 2]     ),
-  .ss_tdata_i    ( tdata_h       [STAGES_QUANTITY - 2]     ),
-  .ss_tready_o   ( tready_h      [STAGES_QUANTITY - 2]     ),
+  .ss_aresetn_i  (   aresetn_h     [STAGES_QUANTITY - 2]                                    ),
+  .ss_tvalid_i   (   tvalid_h      [STAGES_QUANTITY - 2]                                    ),
+  .ss_tdata_i    (   tdata_h       [STAGES_QUANTITY - 2]                                    ),
+  .ss_tready_o   (   tready_h      [STAGES_QUANTITY - 2]                                    ),
   
-  .sm_aresetn_o  ( sm_aresetn_o                            ),
-  .sm_tvalid_o   ( sm_tvalid_o                             ),
-  .sm_tdata_o    ( sm_tdata_o                              ),  
-  .sm_tready_i   ( sm_tready_i                             )
+  .sm_aresetn_o  (   sm_aresetn_o                                                           ),
+  .sm_tvalid_o   (   sm_tvalid_o                                                            ),
+  .sm_tdata_o    ( { sm_tdata_o  [R_WIDTH - 1 : 0], sm_tdata_o[TDATA_WIDTH - 1 : R_WIDTH] } ),  
+  .sm_tready_i   (   sm_tready_i                                                            )
 );
 
 initial

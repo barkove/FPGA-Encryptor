@@ -27,6 +27,7 @@ module replacer #(
   output reg [R_WIDTH - 1 : 0] data_o 
 );
 
+// S0
 always @( * )
   case ( data_i[3 : 0] )
     4'h0: data_o[3 : 0] = 4'hc;
@@ -47,6 +48,7 @@ always @( * )
     4'hf: data_o[3 : 0] = 4'h1;
   endcase
 
+// S1
 always @( * )
   case ( data_i[7 : 4] )
     4'h0: data_o[7 : 4] = 4'h6;
@@ -67,6 +69,7 @@ always @( * )
     4'hf: data_o[7 : 4] = 4'hf;
   endcase
 
+// S2
 always @( * )
   case ( data_i[11 : 8] )
     4'h0: data_o[11 : 8] = 4'hb;
@@ -87,6 +90,7 @@ always @( * )
     4'hf: data_o[11 : 8] = 4'h0;
   endcase
 
+// S3
 always @( * )
   case ( data_i[15 : 12] )
     4'h0: data_o[15 : 12] = 4'hc;
@@ -107,6 +111,7 @@ always @( * )
     4'hf: data_o[15 : 12] = 4'hb;
   endcase
 
+// S4
 always @( * )
   case ( data_i[19 : 16] )
     4'h0: data_o[19 : 16] = 4'h7;
@@ -127,6 +132,7 @@ always @( * )
     4'hf: data_o[19 : 16] = 4'hc;
   endcase
 
+// S5
 always @( * )
   case ( data_i[23 : 20] )
     4'h0: data_o[23 : 20] = 4'h5;
@@ -147,6 +153,7 @@ always @( * )
     4'hf: data_o[23 : 20] = 4'h0;
   endcase
 
+// S6
 always @( * )
   case ( data_i[27 : 24] )
     4'h0: data_o[27 : 24] = 4'h8;
@@ -167,6 +174,7 @@ always @( * )
     4'hf: data_o[27 : 24] = 4'h7;
   endcase
 
+// S7
 always @( * )
   case ( data_i[31 : 28] )
     4'h0: data_o[31 : 28] = 4'h1;
