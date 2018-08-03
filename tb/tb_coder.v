@@ -67,44 +67,33 @@ initial
       clk_i = ~clk_i;
   end
 
-initial
+task write_reset(
+  input reset_en
+);
   begin
-    // reset
-    ss_aresetn_i = 0;
-    ss_tvalid_i  = 0;
-    ss_tdata_i   = 0;
-    sm_tready_i  = 0;
-    #CLOCK_SEMI_PERIOD_NS;
-    #CLOCK_SEMI_PERIOD_NS;
-    // get ss_tdata_i
-    ss_aresetn_i = 1;
-    ss_tvalid_i  = 1;
-    ss_tdata_i   = 'h0123456789abcdef;
-    sm_tready_i  = 0;
-    #CLOCK_SEMI_PERIOD_NS;
-    #CLOCK_SEMI_PERIOD_NS;
-    // coder is full and cannot to get data
-    ss_aresetn_i = 1;
-    ss_tvalid_i  = 1;
-    ss_tdata_i   = 'habcdef0123456789;
-    sm_tready_i  = 0;
-    #CLOCK_SEMI_PERIOD_NS;
-    #CLOCK_SEMI_PERIOD_NS;
-    // coder can to get data, because its data will be passed the next rising edge 
-    ss_aresetn_i = 1;
-    ss_tvalid_i  = 1;
-    ss_tdata_i   = 'habcdef0123456789;
-    sm_tready_i  = 1;
-    #CLOCK_SEMI_PERIOD_NS;
-    #CLOCK_SEMI_PERIOD_NS;
-    // coder is passing data without getting new data
-    ss_aresetn_i = 1;
-    ss_tvalid_i  = 0;
-    ss_tdata_i   = 'habcdef0123456789;
-    sm_tready_i  = 1;       
+    ss_aresetn_i <= !reset_en;
   end
+endtask
 
-integer i;
+task write_read_en(
+  input read_en
+);
+  begin
+    sm_tready_i <= read_en;
+  end
+endtask
+
+task write_data(
+  input tvalid  ,
+  input tdata   ,
+);
+  begin
+    ss_tvalid_i  <= tvalid ;
+    ss_tdata_i   <= tdata  ;
+  end
+endtask
+
+integer i, j, err_cnt;
 
 integer                       file;
 integer                       file_enc;
@@ -112,23 +101,43 @@ integer                       file_enc;
 reg     [TDATA_WIDTH - 1 : 0] file_val     [0 : TEST_VALUES_QUANTITY];
 reg     [TDATA_WIDTH - 1 : 0] file_enc_val [0 : TEST_VALUES_QUANTITY];
 
-initial begin
-  file     = $fopen("test_sr_100val.txt"    , "r");
-  file_enc = $fopen("test_sr_100val_enc.txt", "r");
-  if ( file == 0 || file_enc == 0 )
-    begin
-      $display("Error: one of test files has not opened");
-      $finish;
-    end
-  for ( i = 0; i < 100; i = i + 1 )
-    begin
-      $fscanf( file    , "%h\n", file_val[i]     );
-      $fscanf( file_enc, "%h\n", file_enc_val[i] );
-      $display("Input / Output value: %h - %h", file_val[i], file_enc_val[i]);
-    end
-  $fclose(file    );
-  $fclose(file_enc);
-  $stop;
-end
+initial
+  begin
+    file     = $fopen("test_sr_100val.txt"    , "r");
+    file_enc = $fopen("test_sr_100val_enc.txt", "r");
+    if ( file == 0 || file_enc == 0 )
+      begin
+        $display("Error: one of test files has not opened");
+        $finish;
+      end
+    for ( i = 0; i < TEST_VALUES_QUANTITY; i = i + 1 )
+      begin
+        $fscanf( file    , "%h\n", file_val[i]     );
+        $fscanf( file_enc, "%h\n", file_enc_val[i] );
+        $display( "Input / Output value: %h - %h", file_val[i], file_enc_val[i] );
+      end
+    $fclose( file    );
+    $fclose( file_enc );
+  end
+
+initial
+  begin
+    write_reset( 1 );
+    @( posedge clk );
+    write_reset( 0 );
+    write_read_en( 1 );
+    err_cnt = 0;
+    for ( i = 0, k = 0; k != TEST_VALUES_QUANTITY; i = i + 1 )
+      begin
+        write_data( i < TEST_VALUES_QUANTITY, i < TEST_VALUES_QUANTITY ? file_val[i] : 0 );
+        @(posedge clk);
+        if ( sm_tvalid_o )
+          begin
+            $display( ( file_enc_val[k] == sm_tdata_o ) ? 
+                      ( "%d pair - correct\n" ) : ( "%d pair - incorrect\n" ), k);
+            err_cnt = err_cnt + ( file_enc_val[k] != sm_tdata_o );
+            k = k + 1;
+          end
+  end
 
 endmodule
