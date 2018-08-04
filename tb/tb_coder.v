@@ -23,11 +23,11 @@
 module tb_coder();
 
 parameter TEST_VALUES_QUANTITY   = 100;
-parameter CLOCK_SEMI_PERIOD_NS   = 10;
-parameter TDATA_WIDTH            = 64;
+parameter CLOCK_SEMI_PERIOD_NS   = 3  ;
+parameter TDATA_WIDTH            = 64 ;
 parameter KEY_WIDTH              = 256;
-parameter K_WIDTH                = 32;
-parameter R_WIDTH                = 32;
+parameter K_WIDTH                = 32 ;
+parameter R_WIDTH                = 32 ;
 
 reg clk_i;
 
@@ -60,40 +60,52 @@ coder #(
   .sm_tready_i     ( sm_tready_i  )
 );
 
-initial 
+task clock_start();
   begin
     clk_i = 0;
     forever #CLOCK_SEMI_PERIOD_NS 
       clk_i = ~clk_i;
   end
+endtask
 
-task write_reset(
-  input reset_en
-);
+task reset();
   begin
-    ss_aresetn_i <= !reset_en;
+    ss_aresetn_i = 0;
+    @( posedge clk_i );
+    ss_aresetn_i = 1;
   end
 endtask
 
-task write_read_en(
-  input read_en
+task write_value(
+  input      [TDATA_WIDTH - 1 : 0] value
 );
   begin
-    sm_tready_i <= read_en;
+    ss_tvalid_i = 1;
+    ss_tdata_i = value;
+    if ( !ss_tready_o )
+      @( posedge ss_tready_o );
+    @( posedge clk_i );
+    @( negedge clk_i );
+    ss_tvalid_i = 0;
   end
 endtask
 
-task write_data(
-  input tvalid  ,
-  input tdata   ,
+task read_value(
+  output reg [TDATA_WIDTH - 1 : 0] value
 );
   begin
-    ss_tvalid_i  <= tvalid ;
-    ss_tdata_i   <= tdata  ;
+    sm_tready_i = 1;
+    if ( !sm_tvalid_o )
+      @( posedge sm_tvalid_o );   
+    @( negedge clk_i ); 
+    value = sm_tdata_o;
+    @( posedge clk_i );
+    sm_tready_i = 0;
   end
 endtask
 
-integer i, j, err_cnt;
+integer                       i, j, err_cnt;
+reg     [TDATA_WIDTH - 1 : 0] rd_value;
 
 integer                       file;
 integer                       file_enc;
@@ -110,34 +122,39 @@ initial
         $display("Error: one of test files has not opened");
         $finish;
       end
+    $display( "Input / Output value: ");
     for ( i = 0; i < TEST_VALUES_QUANTITY; i = i + 1 )
       begin
         $fscanf( file    , "%h\n", file_val[i]     );
         $fscanf( file_enc, "%h\n", file_enc_val[i] );
-        $display( "Input / Output value: %h - %h", file_val[i], file_enc_val[i] );
+        $display( "\t%h / %h", file_val[i], file_enc_val[i] );
       end
-    $fclose( file    );
+    $fclose( file     );
     $fclose( file_enc );
+    clock_start();
   end
-
+  
 initial
   begin
-    write_reset( 1 );
-    @( posedge clk );
-    write_reset( 0 );
-    write_read_en( 1 );
+    reset();
+    @( negedge clk_i);
+    for (i = 0; i < TEST_VALUES_QUANTITY; i = i + 1)
+        write_value( .value( file_val[i] ) );
+  end
+  
+initial
+  begin
+    reset();
     err_cnt = 0;
-    for ( i = 0, k = 0; k != TEST_VALUES_QUANTITY; i = i + 1 )
-      begin
-        write_data( i < TEST_VALUES_QUANTITY, i < TEST_VALUES_QUANTITY ? file_val[i] : 0 );
-        @(posedge clk);
-        if ( sm_tvalid_o )
-          begin
-            $display( ( file_enc_val[k] == sm_tdata_o ) ? 
-                      ( "%d pair - correct\n" ) : ( "%d pair - incorrect\n" ), k);
-            err_cnt = err_cnt + ( file_enc_val[k] != sm_tdata_o );
-            k = k + 1;
-          end
+    $display("True value / result value:");
+    for (j = 0; j < TEST_VALUES_QUANTITY; j = j + 1)
+      begin  
+        read_value( .value( rd_value ) );
+        $display( "\t%h / %h", file_enc_val[j], rd_value );
+        if ( file_enc_val[j] != rd_value )
+          err_cnt = err_cnt + 1;
+      end
+    $display("The number of errors: %d", err_cnt);
   end
 
 endmodule
