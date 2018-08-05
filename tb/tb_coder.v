@@ -22,7 +22,7 @@
 
 module tb_coder();
 
-parameter TEST_VALUES_QUANTITY   = 100;
+parameter TEST_VALUES_QUANTITY   = 100000;
 parameter CLOCK_SEMI_PERIOD_NS   = 3  ;
 parameter TDATA_WIDTH            = 64 ;
 parameter KEY_WIDTH              = 256;
@@ -115,8 +115,8 @@ reg     [TDATA_WIDTH - 1 : 0] file_enc_val [0 : TEST_VALUES_QUANTITY];
 
 initial
   begin
-    file     = $fopen("test_sr_100val.txt"    , "r");
-    file_enc = $fopen("test_sr_100val_enc.txt", "r");
+    file     = $fopen("test_sr_100000val.txt"    , "r");
+    file_enc = $fopen("test_sr_100000val_enc.txt", "r");
     if ( file == 0 || file_enc == 0 )
       begin
         $display("Error: one of test files has not opened");
